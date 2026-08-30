@@ -1,0 +1,920 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+       name="humanoid_wheeled_robot">
+
+
+  <!-- ========================================================= -->
+  <!-- MATERIALS -->
+  <!-- ========================================================= -->
+
+  <material name="white">
+    <color rgba="0.85 0.85 0.85 1.0"/>
+  </material>
+
+  <material name="dark_gray">
+    <color rgba="0.12 0.12 0.14 1.0"/>
+  </material>
+
+  <material name="blue">
+    <color rgba="0.05 0.25 0.8 1.0"/>
+  </material>
+
+  <material name="orange">
+    <color rgba="1.0 0.35 0.02 1.0"/>
+  </material>
+
+  <material name="black">
+    <color rgba="0.02 0.02 0.02 1.0"/>
+  </material>
+
+
+  <!-- ========================================================= -->
+  <!-- WORLD -->
+  <!-- ========================================================= -->
+
+  <link name="world"/>
+
+  <joint name="world_fixed" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- MOBILE BASE -->
+  <!-- ========================================================= -->
+
+  <link name="base_link">
+
+    <visual>
+      <origin xyz="0 0 0.18"/>
+      <geometry>
+        <box size="0.65 0.55 0.36"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.18"/>
+      <geometry>
+        <box size="0.65 0.55 0.36"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0.18"/>
+      <mass value="20.0"/>
+      <inertia
+        ixx="1.0"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="1.0"
+        iyz="0.0"
+        izz="1.0"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ========================================================= -->
+  <!-- LEFT DRIVE WHEEL -->
+  <!-- ========================================================= -->
+
+  <link name="left_wheel_link">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.16" length="0.08"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.16" length="0.08"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="2.0"/>
+      <inertia
+        ixx="0.02"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.02"
+        iyz="0.0"
+        izz="0.02"/>
+    </inertial>
+
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel_link"/>
+    <origin xyz="0 0.32 0.16" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- RIGHT DRIVE WHEEL -->
+  <!-- ========================================================= -->
+
+  <link name="right_wheel_link">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.16" length="0.08"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.16" length="0.08"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="2.0"/>
+      <inertia
+        ixx="0.02"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.02"
+        iyz="0.0"
+        izz="0.02"/>
+    </inertial>
+
+  </link>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel_link"/>
+    <origin xyz="0 -0.32 0.16" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- FRONT CASTER -->
+  <!-- ========================================================= -->
+
+  <link name="front_caster_link">
+
+    <visual>
+      <geometry>
+        <sphere radius="0.08"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+
+    <collision>
+      <geometry>
+        <sphere radius="0.08"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia
+        ixx="0.001"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.001"
+        iyz="0.0"
+        izz="0.001"/>
+    </inertial>
+
+  </link>
+
+  <joint name="front_caster_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="front_caster_link"/>
+    <origin xyz="0.27 0 0.07"/>
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- REAR CASTER -->
+  <!-- ========================================================= -->
+
+  <link name="rear_caster_link">
+
+    <visual>
+      <geometry>
+        <sphere radius="0.08"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+
+    <collision>
+      <geometry>
+        <sphere radius="0.08"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia
+        ixx="0.001"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.001"
+        iyz="0.0"
+        izz="0.001"/>
+    </inertial>
+
+  </link>
+
+  <joint name="rear_caster_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="rear_caster_link"/>
+    <origin xyz="-0.27 0 0.07"/>
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- HUMANOID TORSO -->
+  <!-- ========================================================= -->
+
+  <link name="torso_link">
+
+    <visual>
+      <origin xyz="0 0 0.42"/>
+      <geometry>
+        <box size="0.48 0.50 0.84"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.42"/>
+      <geometry>
+        <box size="0.48 0.50 0.84"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0.42"/>
+      <mass value="12.0"/>
+      <inertia
+        ixx="0.8"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.8"
+        iyz="0.0"
+        izz="0.6"/>
+    </inertial>
+
+  </link>
+
+  <joint name="torso_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="torso_link"/>
+    <origin xyz="0 0 0.36"/>
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- HEAD -->
+  <!-- ========================================================= -->
+
+  <link name="head_link">
+
+    <visual>
+      <origin xyz="0 0 0.14"/>
+      <geometry>
+        <box size="0.28 0.32 0.28"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.14"/>
+      <geometry>
+        <box size="0.28 0.32 0.28"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0.14"/>
+      <mass value="2.0"/>
+      <inertia
+        ixx="0.08"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.08"
+        iyz="0.0"
+        izz="0.08"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ========================================================= -->
+  <!-- NECK -->
+  <!-- ========================================================= -->
+
+  <joint name="neck_joint" type="revolute">
+
+    <parent link="torso_link"/>
+    <child link="head_link"/>
+
+    <origin xyz="0 0 0.84"/>
+
+    <axis xyz="0 0 1"/>
+
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="10"
+      velocity="1.0"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- 6 DOF ARM -->
+  <!-- ========================================================= -->
+
+  <!--
+    ZERO POSE:
+
+    q1 = 0
+    q2 = 0
+    q3 = 0
+    q4 = 0
+    q5 = 0
+    q6 = 0
+
+    Upper arm + forearm + wrist point along +X.
+  -->
+
+
+  <!-- ========================================================= -->
+  <!-- 1. SHOULDER PITCH -->
+  <!-- ========================================================= -->
+
+  <link name="shoulder_pitch_link">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.085" length="0.14"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.085" length="0.14"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.8"/>
+      <inertia
+        ixx="0.012"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.012"
+        iyz="0.0"
+        izz="0.012"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="shoulder_pitch_joint" type="revolute">
+
+    <parent link="torso_link"/>
+    <child link="shoulder_pitch_link"/>
+
+    <origin xyz="0 0.32 0.68" rpy="0 0 0"/>
+
+    <axis xyz="0 1 0"/>
+
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="40"
+      velocity="1.5"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- 2. SHOULDER ROLL -->
+  <!-- ========================================================= -->
+
+  <link name="shoulder_roll_link">
+
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.075" length="0.14"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.075" length="0.14"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia
+        ixx="0.015"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.015"
+        iyz="0.0"
+        izz="0.015"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="shoulder_roll_joint" type="revolute">
+
+    <parent link="shoulder_pitch_link"/>
+    <child link="shoulder_roll_link"/>
+
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+
+    <axis xyz="1 0 0"/>
+
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="40"
+      velocity="1.5"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- 3. SHOULDER YAW / UPPER ARM -->
+  <!-- ========================================================= -->
+
+  <link name="upper_arm_link">
+
+    <visual>
+      <origin xyz="0.22 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.065" length="0.44"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.22 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.065" length="0.44"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.22 0 0"/>
+      <mass value="1.8"/>
+      <inertia
+        ixx="0.03"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.03"
+        iyz="0.0"
+        izz="0.03"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="shoulder_yaw_joint" type="revolute">
+
+    <parent link="shoulder_roll_link"/>
+    <child link="upper_arm_link"/>
+
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+
+    <axis xyz="0 0 1"/>
+
+    <limit
+      lower="-3.14159"
+      upper="3.14159"
+      effort="30"
+      velocity="1.5"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- 4. ELBOW PITCH -->
+  <!-- ========================================================= -->
+
+  <link name="forearm_link">
+
+    <visual>
+      <origin xyz="0.20 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.40"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.20 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.40"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.20 0 0"/>
+      <mass value="1.2"/>
+      <inertia
+        ixx="0.02"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.02"
+        iyz="0.0"
+        izz="0.02"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="elbow_pitch_joint" type="revolute">
+
+    <parent link="upper_arm_link"/>
+    <child link="forearm_link"/>
+
+    <origin xyz="0.44 0 0" rpy="0 0 0"/>
+
+    <axis xyz="0 1 0"/>
+
+    <limit
+      lower="-2.2"
+      upper="2.2"
+      effort="30"
+      velocity="1.5"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- 5. WRIST PITCH -->
+  <!-- ========================================================= -->
+
+  <link name="wrist_pitch_link">
+
+    <visual>
+      <origin xyz="0.07 0 0"/>
+      <geometry>
+        <box size="0.14 0.10 0.10"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.07 0 0"/>
+      <geometry>
+        <box size="0.14 0.10 0.10"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.07 0 0"/>
+      <mass value="0.4"/>
+      <inertia
+        ixx="0.005"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.005"
+        iyz="0.0"
+        izz="0.005"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="wrist_pitch_joint" type="revolute">
+
+    <parent link="forearm_link"/>
+    <child link="wrist_pitch_link"/>
+
+    <origin xyz="0.40 0 0" rpy="0 0 0"/>
+
+    <axis xyz="0 1 0"/>
+
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="15"
+      velocity="2.0"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- 6. WRIST ROLL -->
+  <!-- ========================================================= -->
+
+  <link name="wrist_roll_link">
+
+    <visual>
+      <origin xyz="0.08 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.045" length="0.16"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.08 0 0" rpy="0 1.5708 0"/>
+      <geometry>
+        <cylinder radius="0.045" length="0.16"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.08 0 0"/>
+      <mass value="0.3"/>
+      <inertia
+        ixx="0.004"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.004"
+        iyz="0.0"
+        izz="0.004"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="wrist_roll_joint" type="revolute">
+
+    <parent link="wrist_pitch_link"/>
+    <child link="wrist_roll_link"/>
+
+    <origin xyz="0.14 0 0" rpy="0 0 0"/>
+
+    <axis xyz="1 0 0"/>
+
+    <limit
+      lower="-3.14159"
+      upper="3.14159"
+      effort="10"
+      velocity="2.0"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- GRIPPER BODY -->
+  <!-- ========================================================= -->
+
+  <link name="gripper_link">
+
+    <visual>
+      <origin xyz="0.10 0 0"/>
+      <geometry>
+        <box size="0.20 0.10 0.08"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.10 0 0"/>
+      <geometry>
+        <box size="0.20 0.10 0.08"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.10 0 0"/>
+      <mass value="0.3"/>
+      <inertia
+        ixx="0.003"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.003"
+        iyz="0.0"
+        izz="0.003"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="gripper_fixed_joint" type="fixed">
+
+    <parent link="wrist_roll_link"/>
+    <child link="gripper_link"/>
+
+    <origin xyz="0.16 0 0" rpy="0 0 0"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- LEFT GRIPPER FINGER -->
+  <!-- ========================================================= -->
+
+  <link name="left_finger_link">
+
+    <visual>
+      <origin xyz="0.07 0 0"/>
+      <geometry>
+        <box size="0.14 0.035 0.035"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.07 0 0"/>
+      <geometry>
+        <box size="0.14 0.035 0.035"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.07 0 0"/>
+      <mass value="0.05"/>
+      <inertia
+        ixx="0.0001"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.0001"
+        iyz="0.0"
+        izz="0.0001"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="left_finger_joint" type="fixed">
+
+    <parent link="gripper_link"/>
+    <child link="left_finger_link"/>
+
+    <origin xyz="0 0.065 0" rpy="0 0 0"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- RIGHT GRIPPER FINGER -->
+  <!-- ========================================================= -->
+
+  <link name="right_finger_link">
+
+    <visual>
+      <origin xyz="0.07 0 0"/>
+      <geometry>
+        <box size="0.14 0.035 0.035"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.07 0 0"/>
+      <geometry>
+        <box size="0.14 0.035 0.035"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.07 0 0"/>
+      <mass value="0.05"/>
+      <inertia
+        ixx="0.0001"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.0001"
+        iyz="0.0"
+        izz="0.0001"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="right_finger_joint" type="fixed">
+
+    <parent link="gripper_link"/>
+    <child link="right_finger_link"/>
+
+    <origin xyz="0 -0.065 0" rpy="0 0 0"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- GAZEBO WHEEL FRICTION -->
+  <!-- ========================================================= -->
+
+  <gazebo reference="left_wheel_link">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000</kp>
+    <kd>100</kd>
+  </gazebo>
+
+  <gazebo reference="right_wheel_link">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000</kp>
+    <kd>100</kd>
+  </gazebo>
+
+
+  <!-- ========================================================= -->
+  <!-- ROS 2 CONTROL -->
+  <!-- ========================================================= -->
+
+  <ros2_control name="GazeboSystem" type="system">
+
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <!-- Shoulder Pitch -->
+    <joint name="shoulder_pitch_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- Shoulder Roll -->
+    <joint name="shoulder_roll_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- Shoulder Yaw -->
+    <joint name="shoulder_yaw_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- Elbow Pitch -->
+    <joint name="elbow_pitch_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- Wrist Pitch -->
+    <joint name="wrist_pitch_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- Wrist Roll -->
+    <joint name="wrist_roll_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+  </ros2_control>
+
+
+  <!-- ========================================================= -->
+  <!-- GAZEBO HARMONIC ROS 2 CONTROL PLUGIN -->
+  <!-- ========================================================= -->
+
+  <gazebo>
+
+    <plugin
+      filename="gz_ros2_control-system"
+      name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+
+      <parameters>
+        $(find my_robot)/config/ros2_controllers.yaml
+      </parameters>
+
+    </plugin>
+
+  </gazebo>
+
+
+</robot>

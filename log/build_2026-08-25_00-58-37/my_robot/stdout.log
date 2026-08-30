@@ -1,0 +1,37 @@
+running egg_info
+creating ../../build/my_robot/my_robot.egg-info
+writing ../../build/my_robot/my_robot.egg-info/PKG-INFO
+writing dependency_links to ../../build/my_robot/my_robot.egg-info/dependency_links.txt
+writing entry points to ../../build/my_robot/my_robot.egg-info/entry_points.txt
+writing requirements to ../../build/my_robot/my_robot.egg-info/requires.txt
+writing top-level names to ../../build/my_robot/my_robot.egg-info/top_level.txt
+writing manifest file '../../build/my_robot/my_robot.egg-info/SOURCES.txt'
+reading manifest file '../../build/my_robot/my_robot.egg-info/SOURCES.txt'
+writing manifest file '../../build/my_robot/my_robot.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/salma/new_ws/build/my_robot/build/lib/my_robot
+copying my_robot/__init__.py -> /home/salma/new_ws/build/my_robot/build/lib/my_robot
+copying my_robot/yolo_picker_node.py -> /home/salma/new_ws/build/my_robot/build/lib/my_robot
+running install
+running install_lib
+creating /home/salma/new_ws/install/my_robot/lib/python3.12/site-packages/my_robot
+copying /home/salma/new_ws/build/my_robot/build/lib/my_robot/__init__.py -> /home/salma/new_ws/install/my_robot/lib/python3.12/site-packages/my_robot
+copying /home/salma/new_ws/build/my_robot/build/lib/my_robot/yolo_picker_node.py -> /home/salma/new_ws/install/my_robot/lib/python3.12/site-packages/my_robot
+byte-compiling /home/salma/new_ws/install/my_robot/lib/python3.12/site-packages/my_robot/__init__.py to __init__.cpython-312.pyc
+byte-compiling /home/salma/new_ws/install/my_robot/lib/python3.12/site-packages/my_robot/yolo_picker_node.py to yolo_picker_node.cpython-312.pyc
+running install_data
+creating /home/salma/new_ws/install/my_robot/share/ament_index/resource_index/packages
+copying resource/my_robot -> /home/salma/new_ws/install/my_robot/share/ament_index/resource_index/packages
+copying package.xml -> /home/salma/new_ws/install/my_robot/share/my_robot
+creating /home/salma/new_ws/install/my_robot/share/my_robot/launch
+copying launch/simulation.launch.py -> /home/salma/new_ws/install/my_robot/share/my_robot/launch
+creating /home/salma/new_ws/install/my_robot/share/my_robot/urdf
+copying urdf/assistance_robot.urdf.xacro -> /home/salma/new_ws/install/my_robot/share/my_robot/urdf
+creating /home/salma/new_ws/install/my_robot/share/my_robot/config
+copying config/camera_bridge.yaml -> /home/salma/new_ws/install/my_robot/share/my_robot/config
+running install_egg_info
+Copying ../../build/my_robot/my_robot.egg-info to /home/salma/new_ws/install/my_robot/lib/python3.12/site-packages/my_robot-0.0.0-py3.12.egg-info
+running install_scripts
+Installing yolo_picker script to /home/salma/new_ws/install/my_robot/lib/my_robot
+writing list of installed files to '/home/salma/new_ws/build/my_robot/install.log'
