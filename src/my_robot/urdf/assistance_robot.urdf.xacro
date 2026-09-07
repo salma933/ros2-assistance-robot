@@ -594,6 +594,7 @@
   <gazebo reference="camera_link">
   <sensor name="rgbd_camera" type="rgbd_camera">
     <always_on>true</always_on>
+    <gz_frame_id>camera_optical_frame</gz_frame_id>
     <update_rate>30</update_rate>
     <visualize>true</visualize>
     <topic>/camera/rgbd</topic>
