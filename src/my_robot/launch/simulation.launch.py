@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 
 import os
@@ -64,7 +65,8 @@ def generate_launch_description():
                 'robot_description': ParameterValue(
                     robot_description,
                     value_type=str
-                )
+                ),
+                'use_sim_time': True
             }
         ]
     )
@@ -82,7 +84,11 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            'gz_args': '-r empty.sdf'
+            'gz_args': '-r -v 4 ' + os.path.join(
+                pkg_share,
+                'worlds',
+                'camera_world.sdf'
+            )
         }.items()
     )
 
@@ -116,7 +122,7 @@ def generate_launch_description():
     )
 
     # ============================================================
-    # ROS-GZ CAMERA BRIDGE
+    # ROS-GZ CAMERA + CLOCK BRIDGE
     # ============================================================
 
     ros_gz_bridge = Node(
@@ -202,3 +208,4 @@ def generate_launch_description():
         arm_controller_delayed,
         rviz
     ])
+

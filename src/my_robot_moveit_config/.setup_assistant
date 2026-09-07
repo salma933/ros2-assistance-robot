@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: my_robot
+    relative_path: urdf/assistance_robot.urdf.xacro
+  srdf:
+    relative_path: config/humanoid_wheeled_robot.srdf
+  package_settings:
+    author_name: salma essam
+    author_email: salmaye45@gmail.com
+    generated_timestamp: 1788215335

@@ -1,4 +1,4 @@
- #!/usr/bin/env python3
+#!/usr/bin/env python3
 
 import rclpy
 from rclpy.node import Node
@@ -7,6 +7,7 @@ from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import PointStamped
 
 import message_filters
+
 import numpy as np
 import cv2
 
@@ -19,71 +20,88 @@ from tf2_geometry_msgs import do_transform_point
 class AssistanceRobotVision(Node):
 
     def __init__(self):
-
         super().__init__('assistance_robot_vision')
 
-        # ==========================================================
-        # YOLO MODEL
-        # ==========================================================
-
-        self.get_logger().info("Loading Roboflow YOLO model...")
-
-        self.model = get_model(
-            model_id="YOUR_PROJECT_ID/VERSION",
-            api_key="YOUR_API_KEY"
+        self.get_logger().info(
+            "Starting Assistance Robot Vision..."
         )
 
-        self.get_logger().info("YOLO model loaded successfully.")
+        # =========================================================
+        # ROBoflow MODEL
+        # =========================================================
 
-        # ==========================================================
+        self.model = get_model(
+            model_id="assistance-robot/1",
+            api_key="eXOnVDfSMNPGyakDKRE7"
+        )
+
+        self.get_logger().info(
+            "Roboflow model loaded successfully."
+        )
+
+        # =========================================================
         # CAMERA INTRINSICS
-        # ==========================================================
+        # =========================================================
 
         self.fx = None
         self.fy = None
         self.cx = None
         self.cy = None
 
-        self.camera_frame = None
-
-        # CameraInfo comes from Gazebo
         self.camera_info_sub = self.create_subscription(
             CameraInfo,
-            '/camera/color/camera_info',
+            "/camera/color/camera_info",
             self.camera_info_callback,
             10
         )
 
-        # ==========================================================
+        # =========================================================
         # TF2
-        # ==========================================================
+        # =========================================================
 
         self.tf_buffer = tf2_ros.Buffer()
-
         self.tf_listener = tf2_ros.TransformListener(
             self.tf_buffer,
             self
         )
 
-        # ==========================================================
-        # RGB + DEPTH
-        # ==========================================================
+        # =========================================================
+        # PUBLISH DETECTED OBJECT POSITION
+        # =========================================================
 
-        self.color_sub = message_filters.Subscriber(
+        self.position_pub = self.create_publisher(
+            PointStamped,
+            "/detected_object/position",
+            10
+        )
+
+        # =========================================================
+        # RGB SUBSCRIBER
+        # =========================================================
+
+        self.rgb_sub = message_filters.Subscriber(
             self,
             Image,
-            '/camera/color/image_raw'
+            "/camera/color/image_raw"
         )
+
+        # =========================================================
+        # DEPTH SUBSCRIBER
+        # =========================================================
 
         self.depth_sub = message_filters.Subscriber(
             self,
             Image,
-            '/camera/depth/image_rect_raw'
+            "/camera/depth/image_rect_raw"
         )
+
+        # =========================================================
+        # SYNCHRONIZE RGB + DEPTH
+        # =========================================================
 
         self.sync = message_filters.ApproximateTimeSynchronizer(
             [
-                self.color_sub,
+                self.rgb_sub,
                 self.depth_sub
             ],
             queue_size=10,
@@ -92,34 +110,17 @@ class AssistanceRobotVision(Node):
 
         self.sync.registerCallback(
             self.rgb_depth_callback
-            
-        )
-
-        # ==========================================================
-        # OBJECT POSITION PUBLISHER
-        # ==========================================================
-
-        self.object_position_pub = self.create_publisher(
-            PointStamped,
-            '/detected_object/position',
-            10
         )
 
         self.get_logger().info(
-            "Assistance Robot Vision Node started."
+            "Waiting for RGB + Depth + CameraInfo..."
         )
 
-    # ==============================================================
+    # =============================================================
     # CAMERA INFO
-    # ==============================================================
+    # =============================================================
 
     def camera_info_callback(self, msg):
-
-        # CameraInfo K matrix:
-        #
-        # [ fx  0  cx ]
-        # [ 0  fy  cy ]
-        # [ 0   0   1 ]
 
         self.fx = msg.k[0]
         self.fy = msg.k[4]
@@ -127,405 +128,274 @@ class AssistanceRobotVision(Node):
         self.cx = msg.k[2]
         self.cy = msg.k[5]
 
-        self.camera_frame = msg.header.frame_id
-
         self.get_logger().info(
-            f"Camera Intrinsics received: "
-            f"fx={self.fx:.2f}, "
-            f"fy={self.fy:.2f}, "
-            f"cx={self.cx:.2f}, "
-            f"cy={self.cy:.2f}"
+            f"Camera intrinsics received: "
+            f"fx={self.fx:.3f}, "
+            f"fy={self.fy:.3f}, "
+            f"cx={self.cx:.3f}, "
+            f"cy={self.cy:.3f}"
         )
 
-        # We only need this once
+        # We only need CameraInfo once
         self.destroy_subscription(
             self.camera_info_sub
         )
 
-    # ==============================================================
+    # =============================================================
     # RGB + DEPTH CALLBACK
-    # ==============================================================
+    # =============================================================
 
     def rgb_depth_callback(
         self,
-        color_msg,
+        rgb_msg,
         depth_msg
     ):
 
-        # ----------------------------------------------------------
-        # Make sure CameraInfo has arrived
-        # ----------------------------------------------------------
-
-        if self.fx is None:
-
-            self.get_logger().warn(
-                "Waiting for CameraInfo..."
-            )
-
-            return
-
         try:
 
-            # ======================================================
-            # RGB IMAGE
-            # ======================================================
+            # -----------------------------------------------------
+            # Make sure camera info exists
+            # -----------------------------------------------------
 
-            cv_image = self.convert_color_image(
-                color_msg
-            )
+            if (
+                self.fx is None
+                or self.fy is None
+                or self.cx is None
+                or self.cy is None
+            ):
+                self.get_logger().warn(
+                    "Waiting for camera intrinsics..."
+                )
+                return
 
-            # ======================================================
-            # DEPTH IMAGE
-            # ======================================================
+            # -----------------------------------------------------
+            # RGB -> OpenCV
+            # -----------------------------------------------------
 
-            depth_image = self.convert_depth_image(
-                depth_msg
-            )
+            if rgb_msg.encoding == "rgb8":
 
-            # ======================================================
-            # YOLO
-            # ======================================================
+                cv_image = np.frombuffer(
+                    rgb_msg.data,
+                    dtype=np.uint8
+                ).reshape(
+                    rgb_msg.height,
+                    rgb_msg.width,
+                    3
+                )
+
+                cv_image = cv2.cvtColor(
+                    cv_image,
+                    cv2.COLOR_RGB2BGR
+                )
+
+            elif rgb_msg.encoding == "bgr8":
+
+                cv_image = np.frombuffer(
+                    rgb_msg.data,
+                    dtype=np.uint8
+                ).reshape(
+                    rgb_msg.height,
+                    rgb_msg.width,
+                    3
+                )
+
+            elif rgb_msg.encoding == "rgba8":
+
+                cv_image = np.frombuffer(
+                    rgb_msg.data,
+                    dtype=np.uint8
+                ).reshape(
+                    rgb_msg.height,
+                    rgb_msg.width,
+                    4
+                )
+
+                cv_image = cv2.cvtColor(
+                    cv_image,
+                    cv2.COLOR_RGBA2BGR
+                )
+
+            elif rgb_msg.encoding == "bgra8":
+
+                cv_image = np.frombuffer(
+                    rgb_msg.data,
+                    dtype=np.uint8
+                ).reshape(
+                    rgb_msg.height,
+                    rgb_msg.width,
+                    4
+                )
+
+                cv_image = cv2.cvtColor(
+                    cv_image,
+                    cv2.COLOR_BGRA2BGR
+                )
+
+            else:
+
+                self.get_logger().error(
+                    f"Unsupported RGB encoding: "
+                    f"{rgb_msg.encoding}"
+                )
+
+                return
+
+            # -----------------------------------------------------
+            # DEPTH -> NumPy
+            # -----------------------------------------------------
+
+            if depth_msg.encoding == "32FC1":
+
+                depth_image = np.frombuffer(
+                    depth_msg.data,
+                    dtype=np.float32
+                ).reshape(
+                    depth_msg.height,
+                    depth_msg.width
+                )
+
+                depth_scale = 1.0
+
+            elif depth_msg.encoding == "16UC1":
+
+                depth_image = np.frombuffer(
+                    depth_msg.data,
+                    dtype=np.uint16
+                ).reshape(
+                    depth_msg.height,
+                    depth_msg.width
+                )
+
+                depth_scale = 0.001
+
+            else:
+
+                self.get_logger().error(
+                    f"Unsupported depth encoding: "
+                    f"{depth_msg.encoding}"
+                )
+
+                return
+
+            # -----------------------------------------------------
+            # RUN YOLO
+            # -----------------------------------------------------
 
             results = self.model.infer(
                 cv_image
             )
-            print(results)
-             
-            # ======================================================
-            # PROCESS DETECTIONS
-            # ======================================================
 
-            for prediction in results:
+            # =====================================================
+            # DIAGNOSTIC
+            # =====================================================
 
-                predictions = prediction.get(
-                    "predictions",
-                    []
+            print("\n===============================")
+            print("RESULT TYPE:")
+            print(type(results))
+
+            print("\nRESULT ATTRS:")
+            print(dir(results))
+
+            print("\nRESULT LENGTH:")
+            print(len(results))
+
+            # -----------------------------------------------------
+            # If nothing returned
+            # -----------------------------------------------------
+
+            if len(results) == 0:
+
+                print(
+                    "No inference response returned."
                 )
 
-                for obj in predictions:
+                return
 
-                    label = obj.get(
-                        "class",
-                        "unknown"
+            # -----------------------------------------------------
+            # First response
+            # -----------------------------------------------------
+
+            response = results[0]
+
+            print("\n===============================")
+            print("FIRST RESPONSE TYPE:")
+            print(type(response))
+
+            print("\nFIRST RESPONSE ATTRS:")
+            print(dir(response))
+
+            # -----------------------------------------------------
+            # Predictions
+            # -----------------------------------------------------
+
+            if hasattr(response, "predictions"):
+
+                predictions = response.predictions
+
+                print("\n===============================")
+                print("PREDICTIONS:")
+                print(predictions)
+
+                print("\nPREDICTIONS TYPE:")
+                print(type(predictions))
+
+                print("\nPREDICTIONS LENGTH:")
+                print(len(predictions))
+
+                # -------------------------------------------------
+                # No objects
+                # -------------------------------------------------
+
+                if len(predictions) == 0:
+
+                    print(
+                        "No objects detected."
                     )
 
-                    # YOLO center coordinates
-                    u = int(obj.get("x"))
-                    v = int(obj.get("y"))
+                    return
 
-                    # ------------------------------------------------
-                    # Check image boundaries
-                    # ------------------------------------------------
+                # -------------------------------------------------
+                # First detected object
+                # -------------------------------------------------
 
-                    if not (
-                        0 <= u < depth_image.shape[1]
-                        and
-                        0 <= v < depth_image.shape[0]
-                    ):
+                obj = predictions[0]
 
-                        continue
+                print("\n===============================")
+                print("FIRST OBJECT TYPE:")
+                print(type(obj))
 
-                    # =================================================
-                    # GET DEPTH
-                    # =================================================
+                print("\nFIRST OBJECT ATTRS:")
+                print(dir(obj))
 
-                    depth_value = depth_image[v, u]
+                print("\nFIRST OBJECT:")
+                print(obj)
 
-                    Z = self.get_depth_in_meters(
-                        depth_value,
-                        depth_msg.encoding
-                    )
+                print("===============================\n")
 
-                    if Z <= 0.0:
+                # -------------------------------------------------
+                # STOP HERE FOR DIAGNOSTIC
+                # -------------------------------------------------
 
-                        self.get_logger().warn(
-                            f"Invalid depth for {label}"
-                        )
+                return
 
-                        continue
+            else:
 
-                    # =================================================
-                    # CAMERA 3D COORDINATES
-                    # =================================================
+                print(
+                    "Response has no 'predictions' attribute."
+                )
 
-                    X = (
-                        (u - self.cx)
-                        * Z
-                        / self.fx
-                    )
-
-                    Y = (
-                        (v - self.cy)
-                        * Z
-                        / self.fy
-                    )
-
-                    self.get_logger().info(
-                        f"{label} | "
-                        f"Pixel: ({u}, {v}) | "
-                        f"Camera 3D: "
-                        f"X={X:.3f} "
-                        f"Y={Y:.3f} "
-                        f"Z={Z:.3f}"
-                    )
-
-                    # =================================================
-                    # TRANSFORM TO ROBOT BASE
-                    # =================================================
-
-                    self.publish_robot_coordinates(
-                        label,
-                        X,
-                        Y,
-                        Z,
-                        self.camera_frame
-                    )
-
-            # ======================================================
-            # DISPLAY
-            # ======================================================
-
-            cv2.imshow(
-                "Assistance Robot RGB",
-                cv_image
-            )
-
-            cv2.waitKey(1)
+                return
 
         except Exception as e:
 
             self.get_logger().error(
-                f"Vision error: {str(e)}"
-            )
-
-    # ==============================================================
-    # COLOR IMAGE CONVERSION
-    # ==============================================================
-
-    def convert_color_image(self, msg):
-
-        encoding = msg.encoding.lower()
-
-        data = np.frombuffer(
-            msg.data,
-            dtype=np.uint8
-        )
-
-        # ----------------------------------------------------------
-        # RGB8
-        # ----------------------------------------------------------
-
-        if encoding == 'rgb8':
-
-            image = data.reshape(
-                msg.height,
-                msg.width,
-                3
-            )
-
-            return cv2.cvtColor(
-                image,
-                cv2.COLOR_RGB2BGR
-            )
-
-        # ----------------------------------------------------------
-        # BGR8
-        # ----------------------------------------------------------
-
-        elif encoding == 'bgr8':
-
-            image = data.reshape(
-                msg.height,
-                msg.width,
-                3
-            )
-
-            return image
-
-        # ----------------------------------------------------------
-        # RGBA8
-        # ----------------------------------------------------------
-
-        elif encoding == 'rgba8':
-
-            image = data.reshape(
-                msg.height,
-                msg.width,
-                4
-            )
-
-            return cv2.cvtColor(
-                image,
-                cv2.COLOR_RGBA2BGR
-            )
-
-        # ----------------------------------------------------------
-        # BGRA8
-        # ----------------------------------------------------------
-
-        elif encoding == 'bgra8':
-
-            image = data.reshape(
-                msg.height,
-                msg.width,
-                4
-            )
-
-            return cv2.cvtColor(
-                image,
-                cv2.COLOR_BGRA2BGR
-            )
-
-        else:
-
-            raise ValueError(
-                f"Unsupported color encoding: "
-                f"{msg.encoding}"
-            )
-
-    # ==============================================================
-    # DEPTH IMAGE CONVERSION
-    # ==============================================================
-
-    def convert_depth_image(self, msg):
-
-        encoding = msg.encoding.lower()
-
-        # ----------------------------------------------------------
-        # 16-bit depth
-        # ----------------------------------------------------------
-
-        if encoding == '16uc1':
-
-            data = np.frombuffer(
-                msg.data,
-                dtype=np.uint16
-            )
-
-            return data.reshape(
-                msg.height,
-                msg.width
-            )
-
-        # ----------------------------------------------------------
-        # 32-bit floating point depth
-        # ----------------------------------------------------------
-
-        elif encoding == '32fc1':
-
-            data = np.frombuffer(
-                msg.data,
-                dtype=np.float32
-            )
-
-            return data.reshape(
-                msg.height,
-                msg.width
-            )
-
-        else:
-
-            raise ValueError(
-                f"Unsupported depth encoding: "
-                f"{msg.encoding}"
-            )
-
-    # ==============================================================
-    # DEPTH TO METERS
-    # ==============================================================
-
-    def get_depth_in_meters(
-        self,
-        depth_value,
-        encoding
-    ):
-
-        encoding = encoding.lower()
-
-        # 16UC1 usually represents millimeters
-        if encoding == '16uc1':
-
-            return float(depth_value) / 1000.0
-
-        # 32FC1 is usually meters
-        elif encoding == '32fc1':
-
-            return float(depth_value)
-
-        return 0.0
-
-    # ==============================================================
-    # CAMERA FRAME -> BASE FRAME
-    # ==============================================================
-
-    def publish_robot_coordinates(
-        self,
-        label,
-        X,
-        Y,
-        Z,
-        camera_frame
-    ):
-
-        target_frame = "base_link"
-
-        point_camera = PointStamped()
-
-        point_camera.header.frame_id = camera_frame
-
-        point_camera.header.stamp = (
-            self.get_clock().now().to_msg()
-        )
-
-        point_camera.point.x = X
-        point_camera.point.y = Y
-        point_camera.point.z = Z
-
-        try:
-
-            # ------------------------------------------------------
-            # Get TF:
-            #
-            # camera_frame -> base_link
-            # ------------------------------------------------------
-
-            transform = self.tf_buffer.lookup_transform(
-                target_frame,
-                camera_frame,
-                rclpy.time.Time()
-            )
-
-            point_robot = do_transform_point(
-                point_camera,
-                transform
-            )
-
-            # ------------------------------------------------------
-            # Publish
-            # ------------------------------------------------------
-
-            self.object_position_pub.publish(
-                point_robot
-            )
-
-            self.get_logger().info(
-                f"{label} | "
-                f"BASE 3D: "
-                f"X={point_robot.point.x:.3f} "
-                f"Y={point_robot.point.y:.3f} "
-                f"Z={point_robot.point.z:.3f}"
-            )
-
-        except Exception as e:
-
-            self.get_logger().warn(
-                f"TF transform failed: {str(e)}"
+                f"Vision error: {e}"
             )
 
 
-# ==============================================================
+# =================================================================
 # MAIN
-# ==============================================================
+# =================================================================
 
 def main(args=None):
 
@@ -545,11 +415,9 @@ def main(args=None):
 
         node.destroy_node()
 
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
-        cv2.destroyAllWindows()
 
-
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     main()

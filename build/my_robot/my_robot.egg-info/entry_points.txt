@@ -1,2 +1,0 @@
-[console_scripts]
-yolo_picker = my_robot.yolo_picker_node:main
